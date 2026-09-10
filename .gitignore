@@ -1,0 +1,41 @@
+# ===== 密钥与本地配置 =====
+# 真实的密钥文件绝不提交（.env.example 会保留，作为模板）
+.env
+.env.*
+!.env.example
+
+# ===== Python =====
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ===== Node / 前端 =====
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.cache/
+dist/
+.vite/
+
+# ===== Vercel =====
+.vercel/
+
+# ===== 系统 / 编辑器 =====
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
