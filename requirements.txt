@@ -1,0 +1,8 @@
+# Vercel Python runtime 会读取项目根目录的 requirements.txt 来安装后端依赖。
+# 与 backend/requirements.txt 保持一致。
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+python-multipart>=0.0.9
+python-dotenv>=1.0.0
+openai>=1.40.0
+pypdf>=5.0.0

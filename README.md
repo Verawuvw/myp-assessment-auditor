@@ -7,6 +7,14 @@ Understanding Audit）的独立产品项目。后端基于 FastAPI，前端提�
 
 ```
 myp-auditor/
+├── index.py                   # Vercel 入口：复用后端 app 并挂载静态前端
+├── vercel.json                # Vercel 函数与缓存配置
+├── requirements.txt           # 根目录依赖（供 Vercel 安装）
+├── .python-version            # 固定 Python 版本
+├── docs/
+│   └── VERCEL_DEPLOY.md       # Vercel 部署详细步骤
+├── scripts/
+│   └── verify_vercel_entry.sh # 本地端到端验证脚本
 ├── backend/
 │   ├── main.py                # FastAPI 入口（含 CORS、健康检查、路由挂载）
 │   ├── cli.py                 # 可选命令行入口，复用核心逻辑
@@ -28,7 +36,7 @@ myp-auditor/
 └── frontend/
     ├── index.html             # 上传界面
     ├── styles.css
-    └── app.js                 # 调用 /api/audit
+    └── app.js                 # 调用 /api/audit（API 地址智能解析）
 ```
 
 ## 快速开始
@@ -78,7 +86,32 @@ uvicorn main:app --reload --port 8000
 ### 4. 打开前端
 
 直接用浏览器打开 `frontend/index.html` 即可（也可用任意静态服务器托管）。
-若前后端不同源，请修改 `frontend/app.js` 中的 `API_BASE` 为后端地址。
+
+`frontend/app.js` 会自动解析后端地址：
+
+- **本地开发**（前端在 3000/5173 等非 8000 端口，或直接用 `file://` 打开）→
+  自动指向 `http://127.0.0.1:8000`；
+- **线上（Vercel）**→ 使用同源相对路径 `/api`，无需 CORS；
+- 如需手动指定后端，可在 `index.html` 中启用
+  `<meta name="myp-api-base" content="https://后端地址" />`。
+
+## 部署到 Vercel
+
+项目已包含完整部署配置，Vercel 上使用**单个 FastAPI 应用**同时提供
+API 与静态前端（`/` 返回上传界面，`/api/*` 为后端接口）。
+
+快速步骤：
+
+1. 把代码推送到 GitHub；
+2. 在 <https://vercel.com/new> 导入仓库，Framework Preset 选 **FastAPI**
+   （或 **Other**），Root Directory 保持默认 `./`；
+3. 在环境变量中配置 `OPENAI_API_KEY`、`OPENAI_BASE_URL`、`OPENAI_MODEL`；
+4. 点击 Deploy。
+
+完整说明（含截图级步骤、注意事项与常见问题）见
+**[`docs/VERCEL_DEPLOY.md`](docs/VERCEL_DEPLOY.md)**。
+
+本地可运行 `./scripts/verify_vercel_entry.sh` 事先验证 Vercel 入口行为。
 
 ## API 说明
 
@@ -117,7 +150,7 @@ curl -X POST http://127.0.0.1:8000/api/audit \
 | 状态码 | 含义                              |
 | ------ | --------------------------------- |
 | 400    | 文件类型/语言参数不合法、文件为空 |
-| 413    | 文件超过体积上限                  |
+| 413    | 文件超过体积上限（本地 20 MB；Vercel 上 4 MB）|
 | 422    | PDF 无法解析或未提取到文本        |
 | 502    | 模型未返回内容等上游错误          |
 | 503    | 未配置 `OPENAI_API_KEY`           |

@@ -1,10 +1,38 @@
 // MYP Assessment Auditor — 前端上传逻辑
 // 通过表单 POST 调用后端 /api/audit 接口。
 
-// 前端与后端不同源（前端 3000 端口，后端 8000 端口），因此显式指向后端地址。
-// 生成的完整接口地址为：http://127.0.0.1:8000/api/audit
-const API_BASE = "http://127.0.0.1:8000";
+/**
+ * 解析后端 API 基地址（不带尾斜杠），优先级从高到低：
+ *
+ * 1. 显式覆盖：设置 <meta name="myp-api-base" content="https://api.example.com">
+ *    或在本脚本之前设置 window.MYP_API_BASE —— 适合前后端跨域部署到不同域名。
+ * 2. 本地开发自动探测：前端跑在 3000/5173 等非 8000 端口（或直接以 file:// 打开）时，
+ *    自动指向本机后端 http://127.0.0.1:8000。
+ * 3. 默认：相对路径（同源）—— 即 "/api/audit"。
+ *    这是 Vercel 线上部署的默认行为：前后端同域，无需 CORS。
+ */
+function resolveApiBase() {
+  // 1) 运行时显式覆盖
+  if (typeof window !== "undefined") {
+    if (window.MYP_API_BASE) return String(window.MYP_API_BASE).replace(/\/+$/, "");
+    const meta = document.querySelector('meta[name="myp-api-base"]');
+    if (meta && meta.content) return meta.content.replace(/\/+$/, "");
+  }
 
+  // 2) 本地开发自动探测：前端与后端不同端口时指向本机后端
+  if (typeof window !== "undefined" && window.location) {
+    const { protocol, hostname, port } = window.location;
+    const isLocalHost = hostname === "localhost" || hostname === "127.0.0.1";
+    const isFileProtocol = protocol === "file:";
+    if (isFileProtocol) return "http://127.0.0.1:8000";
+    if (isLocalHost && port && port !== "8000") return "http://127.0.0.1:8000";
+  }
+
+  // 3) 默认同源（相对路径），适用于 Vercel 线上
+  return "";
+}
+
+const API_BASE = resolveApiBase();
 const API_ENDPOINT = `${API_BASE}/api/audit`;
 
 const form = document.getElementById("audit-form");
